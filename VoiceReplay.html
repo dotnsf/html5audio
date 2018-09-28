@@ -1,0 +1,131 @@
+﻿<html>
+<head>
+<title>Voice Replay</title>
+<script src="https://code.jquery.com/jquery-2.0.3.min.js"></script>
+<script>
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+var context = new AudioContext();
+
+window.onload = function(){
+/*
+  if( ( document.readyState == 'interactive' ) || ( document.readyState == 'complete' ) ){
+    onDOMContentLoaded();
+  }else{
+    document.addEventListener( 'DOMContentLoaded', onDOMContentLoaded, true );
+  }
+
+  function onDOMContentLoaded(){
+    function loadAudio( node ){
+      var successCallback = function( audioBuffer ){
+        console.log( audioBuffer );
+        var source = context.createBufferSource();
+
+        source.buffer = audioBuffer;           //. オーディオデータの実体（AudioBuffer インスタンス）
+        source.loop = false;                   //. ループ再生するか？
+        source.loopStart = 0;                  //. オーディオ開始位置（秒単位）
+        source.loopEnd = audioBuffer.duration; //. オーディオ終了位置（秒単位）
+        source.playbackRate.value = 1.0;       //. 再生速度＆ピッチ
+
+        source.connect( context.destination );
+
+        //. for lagacy browsers
+        source.start( 0 );
+        source.onended = function( event ){
+          //. イベントハンドラ削除
+          source.onended = null;
+          document.onkeydown = null;
+
+          //. オーディオ終了
+          source.stop( 0 );
+
+          console.log( 'audio stopped.' );
+        };
+      };
+
+      var errorCallback = function( error ){
+        if( error instanceof Error ){
+          window.alert( error.message );
+        }else{
+          window.alert( 'Error: "decodeAudioData"');
+        }
+      };
+
+      //. オーディオバッファインスタンス作成
+      context.decodeAudioData( node, successCallback, errorCallback );
+    };
+
+    document.querySelector( '[type="file"]' ).addEventListener( 'change', function( event ){
+      var uploader = this;
+
+      var file = event.target.files[0];
+      if( !( file instanceof File ) ){
+        window.alert( 'Error: Please upload file.' );
+      }else if( file.type.indexOf( 'audio' ) == -1 ){
+        window.alert( 'Error: Please upload audio file.' );
+      }else{
+        var reader = new FileReader();
+        reader.onprogress = function( event ){
+        };
+
+        reader.onerror = function(){
+          window.alert( 'Error: FileReader(' + reader.error.code + ')' );
+          uploader.value = '';
+        };
+
+        reader.onload = function(){
+          var arrayBuffer = reader.result;   //. ArrayBuffer（Web Audio API では Float32Array 型配列）
+
+          loadAudio( arrayBuffer );
+        };
+
+        reader.readAsArrayBuffer( file );
+      }
+    }, false );
+  }
+*/
+
+
+}
+
+var processor = null;
+function handleSuccess( stream ){
+  var source = context.createBufferSource();
+  var input = context.createMediaStreamSource( stream );
+  processor = context.createScriptProcessor( 1024, 1, 1 );
+
+  source.connect( processor );
+  processor.connect( context.destination );
+  processor.onaudioprocess = function( e ){
+    console.log( e.inputBuffer );  //. AudioBuffer
+  };
+}
+
+function startRec(){
+  $('#recBtn').css( 'display', 'none' );
+  $('#stopBtn').css( 'display', 'block' );
+
+  navigator.mediaDevices.getUserMedia( { audio: true, video: false } ).then( handleSuccess );
+}
+
+function stopRec(){
+  $('#recBtn').css( 'display', 'block' );
+  $('#stopBtn').css( 'display', 'none' );
+
+  if( processor ){
+    processor.disconnect();
+    processor.onaudioprocess = null;
+    processor = null;
+  }
+}
+</script>
+</head>
+<body>
+  <div id="page">
+    <div>
+      <h2>音声再生</h2>
+      <input type="button" id="recBtn" value="Rec" onClick="startRec();" style="display:block;"/>
+      <input type="button" id="stopBtn" value="Stop" onClick="stopRec();" style="display:none;"/>
+    </div>
+  </div>
+</body>
+</html>
